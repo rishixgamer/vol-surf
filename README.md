@@ -6,7 +6,7 @@ strike convexity and calendar spreads under the carry assumptions below.
 
 [Price an option](#price-and-invert-an-option) · [Build a surface](#build-and-query-a-surface) · [Run the tests](#verify-a-checkout)
 
-The `1.0.0rc1` candidate uses Python 3.11 or later and the standard library.
+Version `1.0.0` uses Python 3.11 or later and the standard library. [MIT license](LICENSE)
 
 ## Install from a checkout
 
