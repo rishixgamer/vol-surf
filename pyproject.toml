@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vol-surf"
+version = "1.0.0rc1"
+description = "Black-76 pricing and interpolation of European option volatility surfaces"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+
+[project.urls]
+Repository = "https://github.com/rishixgamer/vol-surf"
+Issues = "https://github.com/rishixgamer/vol-surf/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
