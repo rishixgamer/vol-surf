@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=77"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling==1.29.0"]
+build-backend = "hatchling.build"
 
 [project]
 name = "vol-surf"
@@ -18,5 +18,8 @@ classifiers = [
 Repository = "https://github.com/rishixgamer/vol-surf"
 Issues = "https://github.com/rishixgamer/vol-surf/issues"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/vol_surf"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/README.md", "/pyproject.toml"]
