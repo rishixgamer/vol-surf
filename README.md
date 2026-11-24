@@ -1,8 +1,12 @@
 # vol-surf
 
-`vol-surf` prices European calls and puts with Black-76, recovers implied
-volatility from premiums, and interpolates a volatility surface on a rectangular
-grid. The `1.0.0rc1` candidate uses Python 3.11 or later and the standard library.
+A Python library for Black-76 pricing and implied volatility for European options.
+It interpolates normalized call prices on a strike and expiry grid and checks
+strike convexity and calendar spreads under the carry assumptions below.
+
+[Price an option](#price-and-invert-an-option) · [Build a surface](#build-and-query-a-surface) · [Run the tests](#verify-a-checkout)
+
+The `1.0.0rc1` candidate uses Python 3.11 or later and the standard library.
 
 ## Install from a checkout
 
