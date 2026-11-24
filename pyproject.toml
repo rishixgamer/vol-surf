@@ -4,12 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vol-surf"
-version = "1.0.0rc1"
+version = "1.0.0"
 description = "Black-76 pricing and interpolation of European option volatility surfaces"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Office/Business :: Financial :: Investment",
 ]
@@ -22,4 +24,4 @@ Issues = "https://github.com/rishixgamer/vol-surf/issues"
 packages = ["src/vol_surf"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/README.md", "/pyproject.toml"]
+include = ["/src", "/tests", "/README.md", "/pyproject.toml", "/LICENSE"]

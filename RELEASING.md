@@ -1,22 +1,22 @@
 # Releasing vol-surf
 
-The candidate introduces the supported `vol_surf` API for Black-76 European
+Version 1.0.0 defines the public `vol_surf` API for Black-76 European
 pricing, implied volatility, and normalized call surfaces. Review changes to
 function signatures, input conventions, domain handling, and numerical behavior
 as part of approving the v1 API.
 
 ## Stable 1.0.0 gates
 
-- [ ] The maintainer approves the v1 API scope and selects a distribution license.
-  Add the license file and matching package metadata before publishing.
+- [ ] Review the v1 API scope and release notes. The code and distribution
+  metadata use the [MIT license](LICENSE).
 - [ ] Run all CI jobs on the release commit on `main`. The matrix covers Python
   3.11–3.14 on Linux and Python 3.14 on macOS and Windows. The distribution job
   checks both the wheel and source archive, compares a second build byte for
   byte, and tests the installed wheel.
 - [ ] Confirm the README examples, numerical references, boundary behavior, and
   surface shape checks all pass. Record known limitations in the release notes.
-- [ ] Set `pyproject.toml` to version `1.0.0` and update the development-status
-  classifier and README. Build and verify these exact sources before tagging.
+- [ ] Verify `SHA256SUMS` from the `vol-surf-distributions` CI artifact on the
+  exact `main` commit that will be tagged.
 
 ## Build and check
 
@@ -42,3 +42,16 @@ attach the tested wheel and source archive to its GitHub release. Include the
 supported Python versions, public API, and interpolation limits in the notes.
 For a PyPI release, confirm control of the project name and configure
 [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) before upload.
+
+## v1.0.0 release notes
+
+- Price European calls and puts with `black_price` and recover volatility
+  from feasible premiums with `implied_volatility`.
+- Build a `VolSurface` from normalized call premiums or a rectangular grid
+  of volatilities. The surface checks strike convexity and calendar spreads
+  before interpolating in normalized premium space.
+- The first stable API covers interpolation inside the supplied grid under
+  the stated carry assumptions. The project documentation describes the
+  numerical limits near intrinsic value and the upper price bound.
+
+The release supports Python 3.11 and later and has no runtime dependencies.
