@@ -31,7 +31,8 @@ volatility requires positive expiry, returns zero at the lower price bound, and
 raises `ValueError` below that bound or at and above the upper bound. For calls
 the upper bound is discounted forward, and for puts it is discounted strike.
 Near either bound, floating-point rounding can erase time value or make multiple
-volatilities reprice to the same premium. Prefer an out-of-the-money premium when
+volatilities reprice to the same premium. With extreme inputs, a normal tail can
+underflow before the premium is scaled. Prefer an out-of-the-money premium when
 inverting a quote with little time value. The formula follows [Black (1976)](https://doi.org/10.1016/0304-405X(76)90024-6).
 
 ## Build and query a surface
@@ -61,6 +62,7 @@ or stay flat in strike, and be convex with strike slopes in `[-1, 0]`. The shape
 check includes the zero-strike boundary value of one. At fixed `K / F`, call
 premiums must be nondecreasing with expiry. Spread, convexity, and calendar
 checks allow an absolute premium tolerance of about `3.6e-15` for roundoff.
+Nonnegative premiums within that tolerance below intrinsic are set to intrinsic.
 
 Interpolation is piecewise linear in strike ratio and expiry in normalized
 premium space, so it preserves these local shape conditions in exact arithmetic

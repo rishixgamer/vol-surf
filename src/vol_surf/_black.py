@@ -40,10 +40,10 @@ class _BlackQuote:
 
         larger, smaller = max(forward, strike), min(forward, strike)
         if abs(difference) <= smaller:
-            self.distance = log1p(abs(difference) / smaller)
+            self.abs_log_moneyness = log1p(abs(difference) / smaller)
         else:
             ratio = larger / smaller
-            self.distance = log(ratio) if isfinite(ratio) else log(larger) - log(smaller)
+            self.abs_log_moneyness = log(ratio) if isfinite(ratio) else log(larger) - log(smaller)
 
     def price(self, total_vol: float) -> float:
         if total_vol == 0.0:
@@ -51,25 +51,31 @@ class _BlackQuote:
         if not isfinite(total_vol):
             return self.upper
 
-        # Price the out-of-the-money leg, then add discounted intrinsic value.
-        if self.distance == 0.0 and total_vol >= 1e-5:
-            time_value = self.small * erf(total_vol / (2.0 * _SQRT_2))
+        # Use the Black arguments for the out-of-the-money leg.
+        scaled_moneyness = -self.abs_log_moneyness / total_vol
+        d1_scaled = (scaled_moneyness + 0.5 * total_vol) / _SQRT_2
+        d2_scaled = (scaled_moneyness - 0.5 * total_vol) / _SQRT_2
+        if self.abs_log_moneyness == 0.0 and total_vol >= 1e-5 and d1_scaled <= 1.0:
+            return self.small * erf(d1_scaled)
+        lower_cdf = 0.5 * erfc(-d2_scaled)
+
+        if d1_scaled > 1.0:
+            # Measure from the upper bound when the premium is close to it.
+            # Adding separately rounded intrinsic and time value can miss it.
+            remainder = self.small * (0.5 * erfc(d1_scaled)) + self.large * lower_cdf
+            return self.upper - remainder
+
+        if total_vol < 1e-5:
+            # Integrate the density between close CDF arguments using the
+            # midpoint and its second derivative, avoiding CDF subtraction.
+            density = _INV_SQRT_2PI * exp(-0.5 * scaled_moneyness * scaled_moneyness)
+            correction = 1.0 + (self.abs_log_moneyness**2 - total_vol**2) / 24.0
+            time_value = self.small * density * total_vol * correction - self.spread * lower_cdf
+        elif abs(d1_scaled) < 0.5 and abs(d2_scaled) < 0.5:
+            # Differencing erf near zero preserves small near-ATM premiums.
+            time_value = self.small * (0.5 * (erf(d1_scaled) - erf(d2_scaled))) - self.spread * lower_cdf
         else:
-            m = -self.distance / total_vol
-            a = (m + 0.5 * total_vol) / _SQRT_2
-            b = (m - 0.5 * total_vol) / _SQRT_2
-            lower_cdf = 0.5 * erfc(-b)
-            if total_vol < 1e-5:
-                # Integrate the density between close CDF arguments using the
-                # midpoint and its second derivative, avoiding CDF subtraction.
-                density = _INV_SQRT_2PI * exp(-0.5 * m * m)
-                correction = 1.0 + (self.distance**2 - total_vol**2) / 24.0
-                time_value = self.small * density * total_vol * correction - self.spread * lower_cdf
-            elif abs(a) < 0.5 and abs(b) < 0.5:
-                # Differencing erf near zero preserves small near-ATM premiums.
-                time_value = self.small * (0.5 * (erf(a) - erf(b))) - self.spread * lower_cdf
-            else:
-                time_value = self.small * (0.5 * erfc(-a)) - self.large * lower_cdf
+            time_value = self.small * (0.5 * erfc(-d1_scaled)) - self.large * lower_cdf
 
         return min(self.upper, self.intrinsic + max(0.0, time_value))
 

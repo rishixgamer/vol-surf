@@ -48,6 +48,15 @@ class SurfaceTests(unittest.TestCase):
         with self.assertRaises(FrozenInstanceError):
             surface.expiries = [2.0]
 
+    def test_accepts_roundoff_when_normalizing_discounted_intrinsic(self):
+        forward, strike, expiry, discount = 110.0, 100.0, 0.005, 0.9
+        ratio = strike / forward
+        call = black_price(forward, strike, expiry, 0.05, discount=discount) / (discount * forward)
+        self.assertLess(call, 1.0 - ratio)
+        surface = VolSurface([expiry], [ratio], [[call]])
+        self.assertEqual(surface.normalized_call(expiry, ratio), 1.0 - ratio)
+        self.assertEqual(surface.implied_volatility(expiry, ratio), 0.0)
+
     def test_rejects_extrapolation_and_nonfinite_queries(self):
         for expiry, ratio in ((0.24, 1), (1.01, 1), (0.5, 0.79), (0.5, 1.31)):
             with self.subTest(expiry=expiry, ratio=ratio), self.assertRaisesRegex(ValueError, "outside"):
@@ -58,6 +67,7 @@ class SurfaceTests(unittest.TestCase):
     def test_rejects_bounds_vertical_butterfly_and_calendar_violations(self):
         cases = (
             ([1], [0.8], [[0.1]], "outside its bounds"),
+            ([1], [1.2], [[-1e-16]], "outside its bounds"),
             ([1], [1.0], [[1.0]], "outside its bounds"),
             ([1], [1.0, 1.2], [[0.12, 0.13]], "call spread"),
             ([1], [1.0, 1.2], [[0.3, 0.07]], "call spread"),

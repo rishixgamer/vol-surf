@@ -65,6 +65,15 @@ class BlackTests(unittest.TestCase):
         self.assertTrue(math.isfinite(vol))
         self.assertEqual(black_price(100, 100, 1, vol), target)
 
+    def test_discounted_in_the_money_price_just_below_upper_bound(self):
+        forward, strike, discount = 157.7891578116566, 7.532734790777497, 0.7642904730174174
+        price = math.nextafter(forward * discount, 0.0)
+        for f, k, kind in ((forward, strike, "call"), (strike, forward, "put")):
+            with self.subTest(kind=kind):
+                iv = implied_volatility(price, f, k, 1, discount=discount, kind=kind)
+                self.assertTrue(math.isfinite(iv))
+                self.assertEqual(black_price(f, k, 1, iv, discount=discount, kind=kind), price)
+
     def test_tiny_at_the_money_volatility_with_representable_price(self):
         vol = math.ulp(0.0)
         price = black_price(1e300, 1e300, 1, vol)

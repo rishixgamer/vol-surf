@@ -31,13 +31,20 @@ def _linear(x: float, left: float, right: float, a: float, b: float) -> float:
     return b + ((right - x) / width) * (a - b)
 
 
-def _validate_calls(ratios: tuple[float, ...], calls: tuple[tuple[float, ...], ...]) -> None:
+def _validate_calls(
+    ratios: tuple[float, ...], calls: tuple[tuple[float, ...], ...]
+) -> tuple[tuple[float, ...], ...]:
     strikes = (0.0, *ratios)
+    intrinsic_values = tuple(max(0.0, 1.0 - strike) for strike in ratios)
+    checked = []
     for index, row in enumerate(calls):
-        for strike, price in zip(ratios, row):
-            if not max(0.0, 1.0 - strike) <= price < 1.0:
+        for intrinsic, price in zip(intrinsic_values, row):
+            if price < 0.0 or max(intrinsic, price) >= 1.0 or intrinsic - price > _PRICE_TOLERANCE:
                 raise ValueError(f"call price outside its bounds at expiry row {index}")
 
+        # Dividing a discounted price by its prepaid forward can round below intrinsic.
+        row = tuple(max(intrinsic, price) for intrinsic, price in zip(intrinsic_values, row))
+        checked.append(row)
         prices = (1.0, *row)
         for left, right, a, b in zip(strikes, strikes[1:], prices, prices[1:]):
             if b > a + _PRICE_TOLERANCE or a - b > right - left + _PRICE_TOLERANCE:
@@ -51,9 +58,10 @@ def _validate_calls(ratios: tuple[float, ...], calls: tuple[tuple[float, ...], .
             if prices[column] > chord + _PRICE_TOLERANCE:
                 raise ValueError(f"call prices must be convex in strike at expiry row {index}")
 
-    for index, (earlier, later) in enumerate(zip(calls, calls[1:])):
+    for index, (earlier, later) in enumerate(zip(checked, checked[1:])):
         if any(b + _PRICE_TOLERANCE < a for a, b in zip(earlier, later)):
             raise ValueError(f"call prices decrease in expiry between rows {index} and {index + 1}")
+    return tuple(checked)
 
 
 def _bracket(axis: Sequence[float], point: float, name: str) -> tuple[int, int]:
@@ -80,7 +88,7 @@ class VolSurface:
         expiries = _axis(self.expiries, "expiries")
         ratios = _axis(self.strike_ratios, "strike ratios")
         calls = _grid(self.normalized_calls, len(expiries), len(ratios), "normalized calls")
-        _validate_calls(ratios, calls)
+        calls = _validate_calls(ratios, calls)
         object.__setattr__(self, "expiries", expiries)
         object.__setattr__(self, "strike_ratios", ratios)
         object.__setattr__(self, "normalized_calls", calls)
